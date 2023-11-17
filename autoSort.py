@@ -52,15 +52,6 @@ def is_file(file_path):
     is_fil = os.path.isfile(file_path)
     return is_fil
 
-# Return true if path is a game file
-def is_game_file(file_path):
-    is_game = False
-    if os.path.isfile(file_path):
-        if get_file_type(file_path) != "UNKNOWN":
-            is_game = True
-    
-    return is_game
-
 # Return true if folder is a disk directory
 def is_disk_directory(folder_path):
     if is_directory(folder_path):
@@ -153,7 +144,7 @@ def compile_files(source_folder):
 
 def move_files_to_destination(files_to_move: list[Tuple[str, list]], destination_folder):
     for file in files_to_move:
-        print(file)
+        
         file_path = file[0]
         file_type: str
         if len(file[1]) == 1:
@@ -171,13 +162,9 @@ def move_files_to_destination(files_to_move: list[Tuple[str, list]], destination
         else:
             file_type = "UNKNOWN"
 
-        print(file)
         file_type = file[1][0]
         
-        print(file_type)
         ext_folder_path = os.path.join(destination_folder, type_to_folder[file_type])
-
-        print(ext_folder_path)
 
         if not directory_exists(ext_folder_path):
             os.makedirs(ext_folder_path)

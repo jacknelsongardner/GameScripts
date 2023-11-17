@@ -49,6 +49,9 @@ def is_game_disk(path):
         
     return False    
 
+def directory_exists(path):
+    return os.path.exists(path)
+
 # Return file extension
 def get_file_extension(file_path):
     file_extension: str = os.path.splitext(file_path.lower())[1]
@@ -81,24 +84,36 @@ def compile_files(source_folder):
     for path in os.listdir(source_folder):
         
         if is_file(path):
-            output_list.append(path,get_file_type(path))
+            output_list.append(path, get_file_type(path))
         elif is_directory(path):
             
             if is_game_disk(path):
-                output_list.append(path,get_disk_type(path))
+                output_list.append(path, get_disk_type(path))
             else:
                 output_list = output_list + compile_files(path)
 
     return output_list 
 
-def move_files_to_destination(source_files, source_folder, destination_folder):
-    for filename in source_files:
+def move_files_to_destination(files_to_move, source_folder, destination_folder):
+    for filename in files_to_move:
 
-        file_path = os.path.join(source_folder, filename)
+        file_path = os.path.join(source_folder, filename[0])
 
-        ext_folder_path = os.path.join(destination_folder, exten_to_type[get_file_extension(file_path)])
+        if len(filename[1]) != 1:
+            
+            while(True):
+                print(f"File is of which type?: \n {filename[1]} or UNKNOWN?")
+                userInput = input(":>> ")
 
-        if not os.path.exists(ext_folder_path):
+                if userInput in filename[1] or userInput == "UNKNOWN":
+                    filename[1] = [userInput]
+                    break    
+        
+        file_type = filename[1][0]
+        
+        ext_folder_path = os.path.join(destination_folder, type_to_folder[file_type])
+
+        if not directory_exists(ext_folder_path):
             os.makedirs(ext_folder_path)
         
         shutil.move(file_path, ext_folder_path)

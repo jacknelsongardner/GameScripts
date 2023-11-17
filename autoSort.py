@@ -43,17 +43,17 @@ game_exten: list = list(exten_to_type.keys())
 disk_based_files = ['.bin','.cue','.gdi']
 
 # Return true if path is a directory
-def is_directory(folder_path):
+def is_directory(folder_path: str) -> bool:
     is_direct = os.path.isdir(folder_path)
     return is_direct
 
 # Return true if path is a file
-def is_file(file_path):
+def is_file(file_path: str) -> bool:
     is_fil = os.path.isfile(file_path)
     return is_fil
 
 # Return true if folder is a disk directory
-def is_disk_directory(folder_path):
+def is_disk_directory(folder_path: str) -> bool:
     if is_directory(folder_path):
         for filename in os.listdir(folder_path):
             
@@ -65,22 +65,22 @@ def is_disk_directory(folder_path):
     return False    
 
 # Join any number of paths
-def join_paths(*paths):
+def join_paths(*paths: str) -> str:
     joined = os.path.join(*paths)
     return joined
 
 # Return true if path exists
-def directory_exists(path):
+def directory_exists(path: str) -> bool:
     exists = os.path.exists(path)
     return exists
 
 # Return file extension
-def get_file_extension(file_path):
+def get_file_extension(file_path: str) -> str:
     file_extension: str = os.path.splitext(file_path.lower())[1]
     return file_extension
 
 # Return file type 
-def get_file_type(file_path):
+def get_file_type(file_path: str) -> str:
     file_exten: str = get_file_extension(file_path)
     file_type: str = UNKNOWN
 
@@ -91,7 +91,7 @@ def get_file_type(file_path):
     return file_type
 
 # Returns type of system disk folder belongs to
-def get_disk_type(folder_path):
+def get_disk_type(folder_path: str) -> str:
     if is_directory(folder_path):
 
         # Iterating through each 
@@ -104,7 +104,7 @@ def get_disk_type(folder_path):
     return UNKNOWN
 
 # Compiles and returns a list of paths to game files in the source_folder 
-def compile_files(source_folder):
+def compile_files(source_folder: str) -> list[Tuple[str, list]]:
     output_list: list[Tuple[str, list]] = []
     
     # Iterating through each file/dir in source
@@ -142,7 +142,7 @@ def compile_files(source_folder):
 
     return output_list 
 
-def move_files_to_destination(files_to_move: list[Tuple[str, list]], destination_folder):
+def move_files_to_destination(files_to_move: list[Tuple[str, list]], destination_folder: str) -> None:
     for file in files_to_move:
         
         file_path = file[0]
@@ -173,7 +173,7 @@ def move_files_to_destination(files_to_move: list[Tuple[str, list]], destination
 
         print(f"{file_path} moved to {ext_folder_path}")
 
-def main():
+def main() -> None:
     # Check if there are exactly three command-line arguments (including the script name)
     if len(sys.argv) != 3:
         print("Usage: python script.py source_folder destination_folder")

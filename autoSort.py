@@ -76,7 +76,20 @@ def get_disk_type(folder_path):
     return "UNKNOWN"
 
 def compile_files(source_folder):
-    
+    output_list = []
+
+    for path in os.listdir(source_folder):
+        
+        if is_file(path):
+            output_list.append(path,get_file_type(path))
+        elif is_directory(path):
+            
+            if is_game_disk(path):
+                output_list.append(path,get_disk_type(path))
+            else:
+                output_list = output_list + compile_files(path)
+
+    return output_list 
 
 def move_files_to_destination(source_files, source_folder, destination_folder):
     for filename in source_files:

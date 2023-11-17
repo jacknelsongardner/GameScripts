@@ -33,9 +33,11 @@ disc_based_files = ['.bin','.cue','.gdi']
 
 # Return whether path is a directory
 def is_directory(path):
+    print(os.path.isfile(path))
     return os.path.isdir(path)
     
 def is_file(path):
+    print(os.path.isfile(path))
     return os.path.isfile(path)
 
 def is_game_disk(path):
@@ -62,6 +64,9 @@ def get_file_type(file_extension):
 
     file_type: str = "UNKNOWN"
 
+    print(file_extension)
+    print(exten_to_type.keys)
+
     if file_extension in exten_to_type.keys:
         file_type = exten_to_type[file_extension]
 
@@ -80,23 +85,32 @@ def get_disk_type(folder_path):
 
 def compile_files(source_folder):
     output_list = []
-
-    for path in os.listdir(source_folder):
-        
-        if is_file(path):
-            output_list.append(path, get_file_type(path))
-        elif is_directory(path):
-            
-            if is_game_disk(path):
-                output_list.append(path, get_disk_type(path))
+    print("\n\n\n\n\nlooking for files")
+    for file in os.listdir(source_folder):
+        file_path = os.path.join(source_folder, file)
+        if is_file(file_path):
+            print("FILE:" + str(file))
+            file_extension = get_file_extension(file)
+            file_type = get_file_type(file_extension)
+            output_list.append(file_path, file_type)
+            print(f"Found {file} of type {file_type}")
+        elif is_directory(file_path):
+            print("found directory")
+            if is_game_disk(file):
+                disk_type = get_disk_type(file)
+                output_list.append(file_path, disk_type)
+                print(f"Found {file} of type {disk_type}")
             else:
-                output_list = output_list + compile_files(path)
+                output_list = output_list + compile_files(file_path)
+                print(f"Found {file} of type FOLDER.")
+        else:
+            print("nothing found")
 
     return output_list 
 
 def move_files_to_destination(files_to_move, source_folder, destination_folder):
     for filename in files_to_move:
-
+        print(filename)
         file_path = os.path.join(source_folder, filename[0])
 
         if len(filename[1]) != 1:

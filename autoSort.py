@@ -1,6 +1,7 @@
 import os
 import sys
 import shutil
+from typing import List, Tuple
 
 # Dictionary for extension to type of file
 exten_to_type: dict = {
@@ -42,39 +43,42 @@ game_exten: list = list(exten_to_type.keys())
 disk_based_files = ['.bin','.cue','.gdi']
 
 # Return true if path is a directory
-def is_directory(path):
-    is_direct = os.path.isdir(path)
+def is_directory(folder_path):
+    is_direct = os.path.isdir(folder_path)
     return is_direct
 
 # Return true if path is a file
-def is_file(path):
-    is_fil = os.path.isfile(path)
+def is_file(file_path):
+    is_fil = os.path.isfile(file_path)
     return is_fil
 
 # Return true if path is a game file
-def is_game_file(path):
+def is_game_file(file_path):
     is_game = False
-    if os.path.isfile(path):
-        if get_file_type(path) != "UNKNOWN":
+    if os.path.isfile(file_path):
+        if get_file_type(file_path) != "UNKNOWN":
             is_game = True
     
     return is_game
 
-def is_game_disk(path):
-    if is_directory(path):
-        for filename in os.listdir(path):
-            print(filename)
+# Return true if folder is a disk directory
+def is_disk_directory(folder_path):
+    if is_directory(folder_path):
+        for filename in os.listdir(folder_path):
+            
             file_extension = get_file_extension(filename)
-            print(file_extension)
+            
             if file_extension in disk_based_files:
                 return True
         
     return False    
 
+# Join any number of paths
 def join_paths(*paths):
     joined = os.path.join(*paths)
     return joined
 
+# Return true if path exists
 def directory_exists(path):
     exists = os.path.exists(path)
     return exists
@@ -84,31 +88,39 @@ def get_file_extension(file_path):
     file_extension: str = os.path.splitext(file_path.lower())[1]
     return file_extension
 
+# Return file type 
 def get_file_type(file_path):
-    file_path: str = get_file_extension(file_path)
-    file_type: str = "UNKNOWN"
+    file_exten: str = get_file_extension(file_path)
+    file_type: str = UNKNOWN
 
-    if file_path in list(exten_to_type.keys()):
-        file_type = exten_to_type[file_path]
+    # If path is
+    if file_exten in game_exten:
+        file_type = exten_to_type[file_exten]
 
     return file_type
 
+# Returns type of system disk folder belongs to
 def get_disk_type(folder_path):
     if is_directory(folder_path):
+
+        # Iterating through each 
         for filename in os.listdir(folder_path):
             file_type = get_file_type(filename)
             
-            if file_type != "UNKNOWN":
+            if file_type != UNKNOWN:
                 return file_type
             
-    return "UNKNOWN"
+    return UNKNOWN
 
+# Compiles and returns a list of paths to game files in the source_folder 
 def compile_files(source_folder):
-    output_list = []
+    output_list: list[Tuple[str, list]] = []
     
+    # Iterating through each file/dir in source
     for file_name in os.listdir(source_folder):
         file_path = join_paths(source_folder, file_name)
 
+        # If we find a file
         if is_file(file_path):
             file_type = get_file_type(file_name)
             print(file_type)
@@ -116,24 +128,30 @@ def compile_files(source_folder):
                 output_list.append((file_path, file_type))
                 print(f"Found {file_name} of type {file_type}")
 
+        # If we find a directory
         elif is_directory(file_path):
-            if is_game_disk(file_path):
+            # If folder is a disk-folder
+            if is_disk_directory(file_path):
                 
                 disk_type = get_disk_type(file_path)
 
+                # Add path and type to output
                 output_list.append((file_path, disk_type))
+
                 print(f"Found {file_name} of type {disk_type}")
-  
+
+            # If folder is just a folder
             else:
                 output_list = output_list + compile_files((file_path))
                 print(f"Found {file_name} of type FOLDER.")
 
+        # If element was not recognized as file or dir
         else:
-            print("nothing found")
+            print("ERROR : CAN'T RECOGNIZE TYPE")
 
     return output_list 
 
-def move_files_to_destination(files_to_move, source_folder, destination_folder):
+def move_files_to_destination(files_to_move: list[Tuple[str, list]], destination_folder):
     for file in files_to_move:
         print(file)
         file_path = file[0]
@@ -192,27 +210,32 @@ def main():
     # Ask if all files are okay to put in to the destination folder
     while True:
         print("All OK? (Y/n)\n")
-        print(f"\n {files_to_move}")
+        print('\n'.join(files_to_move))
 
         response = input("\n:>> ")
 
+        # if yes
         if response.lower() == 'y':
             break
+        # if no
         elif response.lower() == 'n':
-            response = input("Delete which file? (FILENAME/all)\n:>> ")
-
+            response = input("Cancel which file? (FILENAME/all)\n:>> ")
+            # cancel all files
             if response.lower() == 'all':
-                print("Deleting ALL")
+                print("Cancel ALL")
                 files_to_move = []
                 break
             elif response in files_to_move:
                 print(f"Deleting {response}")
                 files_to_move.remove(response)
+            else:
+                print(f"{response} not in files to move / already deleted")
+        # if input unrecognized
         else:
             print("ERROR: Bad user input\n")
 
     # If OK, extract
-    move_files_to_destination(files_to_move, source_folder, destination_folder)
+    move_files_to_destination(files_to_move, destination_folder)
 
     print("Done!")
 

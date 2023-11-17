@@ -2,7 +2,7 @@ import os
 import sys
 import shutil
 
-exten_to_type = {
+exten_to_type: dict = {
     '.nes' : 'NES',
     '.snes' : 'SNES',
     '.n64' : 'N64',
@@ -10,57 +10,70 @@ exten_to_type = {
     '.nds' : 'NDS',
     '.wbfs' : 'WII',
     '.ciso' : 'GC',
-    '.gdi' : 'DC'
+    '.gdi' : 'DC',
 }
 
+type_to_folder: dict = {
+    'NES' : 'NES',
+    'SNES' : 'SNES',
+    'N64' : 'N64',
+    'SNES' : 'SNES',
+    'NDS' : 'NDS',
+    'WII' : 'WII',
+    'GC' : 'GC',
+    'DC' : 'DC',
+    'UNKNOWN' : 'UNRESOLVED'
+}
+
+
 acceptable_extentions = ['.nes','.snes','.n64','.sfc','.nds','.cue','.gdi']
+disc_based_systems: list = ['.gdi', '.ciso']
 
+
+# Return whether path is a directory
 def is_directory(path):
+    return os.path.isdir(path)
+    
+def is_file(path):
+    return os.path.isfile(path)
 
-    directory_path = os.path.isdir(path)
-    return directory_path
+def is_game_disk(path):
+    for filename in path:
+        file_extension = get_file_extension(filename)
+        file_type = get_file_type(file_extension)
 
+        if file_type in disc_based_systems:
+            return True
+        
+    return False    
+
+# Return file extension
 def get_file_extension(file_path):
-
-    file_extension = os.path.splitext(file_path.lower())[1]
+    file_extension: str = os.path.splitext(file_path.lower())[1]
     return file_extension
 
-def get_file_type(file_path):
 
-    file_extension = get_file_extension(file_path)
+def get_file_type(file_path):
+    file_extension: str = get_file_extension(file_path)
+
+    file_type: str = "UNKNOWN"
 
     if file_extension in exten_to_type.keys:
         file_type = exten_to_type[file_extension]
-    else:
-        file_type = "UNKNOWN"
-        
+
     return file_type
 
-def check_file_extension(file_path):
 
-    file_extension = get_file_extension(file_path)
-    # Check if the extension is in the allowed_extensions dictionary
-    if file_extension in acceptable_extentions:
-        print(f"{file_path} is of {file_extension} type")  
-        return True
-    else:
-        print(f"{file_path} is of UNKNOWN type")  
-        return False
-
-def check_folder_type(folder_path):
-
-    if os.is_directory(folder_path):
-        for childfile in os.listdir(os.path.join(folder_path, childfile)):
-            if get_file_extension(childfile) in disk_extensions:   
-                print(f"{folder_path} is of DISK FOLDER type")
-                return True
 
 
 def compile_files(source_folder):
     output_list = []
 
     for filename in os.listdir(source_folder):
-        if check_file_extension(filename) or check_folder_type(filename):
+
+        if is_directory(filename):
+            output_list = output_list + compile_files(filename)
+        elif is_file(filename):
             output_list.append(filename)
 
     return output_list 

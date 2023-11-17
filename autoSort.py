@@ -25,59 +25,68 @@ type_to_folder: dict = {
     'GC' : 'GC',
     'DC' : 'DC',
     'PSP' : 'PSP',
-    'UNKNOWN' : 'UNRESOLVED'
+    'SS' : 'SS',
+    'PS1' : 'PS1'
 }
 
 
-disc_based_files = ['.bin','.cue','.gdi']
+disk_based_files = ['.bin','.cue','.gdi']
 
 # Return whether path is a directory
 def is_directory(path):
-    print(os.path.isfile(path))
-    return os.path.isdir(path)
+    is_direct = os.path.isdir(path)
+    return is_direct
     
 def is_file(path):
-    print(os.path.isfile(path))
-    return os.path.isfile(path)
+    is_fil = os.path.isfile(path)
+    return is_fil
+
+def is_game_file(path)
+    is_game = False
+    if os.path.isfile(path):
+        if get_file_type(path) != "UNKNOWN":
+            is_game = True
+    
+    return is_game
 
 def is_game_disk(path):
     if is_directory(path):
-        for filename in path:
+        for filename in os.listdir(path):
+            print(filename)
             file_extension = get_file_extension(filename)
-            file_type = get_file_type(file_extension)
-
-            if file_type in disc_based_files:
+            print(file_extension)
+            if file_extension in disk_based_files:
                 return True
         
     return False    
 
+def join_paths(*paths):
+    joined = os.path.join(*paths)
+    return joined
+
 def directory_exists(path):
-    return os.path.exists(path)
+    exists = os.path.exists(path)
+    return exists
 
 # Return file extension
 def get_file_extension(file_path):
     file_extension: str = os.path.splitext(file_path.lower())[1]
     return file_extension
 
-
-def get_file_type(file_extension):
-
+def get_file_type(file_path):
+    file_path: str = get_file_extension(file_path)
     file_type: str = "UNKNOWN"
 
-    print(file_extension)
-    print(exten_to_type.keys)
-
-    if file_extension in exten_to_type.keys:
-        file_type = exten_to_type[file_extension]
+    if file_path in list(exten_to_type.keys()):
+        file_type = exten_to_type[file_path]
 
     return file_type
 
 def get_disk_type(folder_path):
     if is_directory(folder_path):
-        for filename in folder_path:
-            file_extension = get_file_extension(filename)
-            file_type = get_file_type(file_extension)
-
+        for filename in os.listdir(folder_path):
+            file_type = get_file_type(filename)
+            
             if file_type != "UNKNOWN":
                 return file_type
             
@@ -85,47 +94,61 @@ def get_disk_type(folder_path):
 
 def compile_files(source_folder):
     output_list = []
-    print("\n\n\n\n\nlooking for files")
-    for file in os.listdir(source_folder):
-        file_path = os.path.join(source_folder, file)
+    
+    for file_name in os.listdir(source_folder):
+        file_path = join_paths(source_folder, file_name)
+
         if is_file(file_path):
-            print("FILE:" + str(file))
-            file_extension = get_file_extension(file)
-            file_type = get_file_type(file_extension)
-            output_list.append(file_path, file_type)
-            print(f"Found {file} of type {file_type}")
+            file_type = get_file_type(file_name)
+
+            if get_file_type(file_name) in list(type_to_folder.keys()):
+                output_list.append((file_path, file_type))
+                print(f"Found {file_name} of type {file_type}")
+
         elif is_directory(file_path):
-            print("found directory")
-            if is_game_disk(file):
-                disk_type = get_disk_type(file)
-                output_list.append(file_path, disk_type)
-                print(f"Found {file} of type {disk_type}")
+            if is_game_disk(file_path):
+                
+                disk_type = get_disk_type(file_path)
+
+                output_list.append((file_path, disk_type))
+                print(f"Found {file_name} of type {disk_type}")
+  
             else:
-                output_list = output_list + compile_files(file_path)
-                print(f"Found {file} of type FOLDER.")
+                output_list = output_list + compile_files((file_path))
+                print(f"Found {file_name} of type FOLDER.")
+
         else:
             print("nothing found")
 
     return output_list 
 
 def move_files_to_destination(files_to_move, source_folder, destination_folder):
-    for filename in files_to_move:
-        print(filename)
-        file_path = os.path.join(source_folder, filename[0])
+    for file in files_to_move:
+        print(file)
+        file_path = file[0]
+        file_type: str
+        if len(file[1]) == 1:
+            file_type = file[1][0]
 
-        if len(filename[1]) != 1:
+        elif len(file[1]) > 1:
             
             while(True):
-                print(f"File is of which type?: \n {filename[1]} or UNKNOWN?")
+                print(f"File is of which type?: \n {file[1]} or UNKNOWN?")
                 userInput = input(":>> ")
 
-                if userInput in filename[1] or userInput == "UNKNOWN":
-                    filename[1] = [userInput]
-                    break    
+                if userInput in file[1] or userInput == "UNKNOWN":
+                    file_type = file[1].index(userInput)
+                    break
+        else:
+            file_type = "UNKNOWN"
+
+        print(file)
+        file_type = file[1][0]
         
-        file_type = filename[1][0]
-        
+        print(file_type)
         ext_folder_path = os.path.join(destination_folder, type_to_folder[file_type])
+
+        print(ext_folder_path)
 
         if not directory_exists(ext_folder_path):
             os.makedirs(ext_folder_path)
@@ -155,10 +178,10 @@ def main():
     # Compile files that are 7z in source folder
     files_to_move = compile_files(source_folder)
     
-    # Ask if all files are okay to unzip to the destination folder
+    # Ask if all files are okay to put in to the destination folder
     while True:
         print("All OK? (Y/n)\n")
-        print('\n'.join(files_to_move))
+        print(f"\n {files_to_move}")
 
         response = input("\n:>> ")
 

@@ -15,8 +15,13 @@ exten_to_type: dict = {
     '.gdi' : ['DC'],
     '.cue' : ['SS','PS1'],
     '.dmg' : ['PSP'],
-    '.iso' : ['WII','PS1','PS2','DC','GC']
-}
+    '.iso' : ['WII','PS1','PS2','DC','GC'],
+    '.sms' : ['SMS'],
+    '.md' : ['SG'],
+    '.gb' : ['GB'],
+    '.gbc' : ['GBC'],
+    '.gba' : ['GBA'],
+} 
 
 # Dictionary for type of folder to sorted folder (within desintation_folder)
 type_to_folder: dict = {
@@ -30,7 +35,12 @@ type_to_folder: dict = {
     'DC' : 'DC',
     'PSP' : 'PSP',
     'SS' : 'SS',
-    'PS1' : 'PS1'
+    'PS1' : 'PS1',
+    'SMS' : 'SMS',
+    'SG' : 'SG',
+    'GBC' : 'GBC',
+    'GB' : 'GB',
+    'GBA' : 'GBA',
 }
 
 # Type of unrecognized types
@@ -64,13 +74,17 @@ def is_disk_directory(folder_path: str) -> bool:
         
     return False    
 
+def get_entry_name(entry_path):
+    entry_name = os.path.basename(entry_path)
+    return entry_name
+
 # Join any number of paths
 def join_paths(*paths: str) -> str:
     joined = os.path.join(*paths)
     return joined
 
 # Return true if path exists
-def directory_exists(path: str) -> bool:
+def path_exists(path: str) -> bool:
     exists = os.path.exists(path)
     return exists
 
@@ -144,34 +158,62 @@ def compile_files(source_folder: str) -> list[Tuple[str, list]]:
 
 def move_files_to_destination(files_to_move: list[Tuple[str, list]], destination_folder: str) -> None:
     for file in files_to_move:
-        
         file_path = file[0]
+
         file_type: str
+
+        # If we have one argument for type
         if len(file[1]) == 1:
             file_type = file[1][0]
-
+        # If more than one arguments for type
         elif len(file[1]) > 1:
             
             while(True):
+                # Ask user which type
                 print(f"File is of which type?: \n {file[1]} or UNKNOWN?")
                 userInput = input(":>> ")
 
+                # Get user input on which type
                 if userInput in file[1] or userInput == "UNKNOWN":
                     file_type = file[1].index(userInput)
                     break
         else:
             file_type = "UNKNOWN"
 
+        # Get filetype from the input tuple
         file_type = file[1][0]
         
         ext_folder_path = os.path.join(destination_folder, type_to_folder[file_type])
 
-        if not directory_exists(ext_folder_path):
+        # Creating sorting directory if not already there
+        if not path_exists(ext_folder_path):
             os.makedirs(ext_folder_path)
         
-        shutil.move(file_path, ext_folder_path)
+        # Moving files to destination
+        if not path_exists(os.path.join(ext_folder_path, get_entry_name(file_path))):
+            shutil.move(file_path, ext_folder_path)
+            print(f"{get_entry_name(file_path)} moved to {destination_folder}")
+        else:
+            print((f"{get_entry_name(file_path)} already exists in {destination_folder}"))
 
-        print(f"{file_path} moved to {ext_folder_path}")
+            # Ask if user wants to replace file in destination directory
+            while(True):
+                print("Replace? Y/n")
+                user_input = input(":>>")
+                
+                if user_input.lower() == 'y':
+                    print(user_input)
+
+                    os.remove(join_paths(ext_folder_path,get_entry_name(file_path)))
+                    print("Deleted original file")
+
+                    shutil.move(file_path, ext_folder_path)
+                    print(f"{get_entry_name(file_path)} moved to {destination_folder}")
+                    break
+                else:
+                    print(user_input)
+                    print("Cancelled file move")
+                    break
 
 def main() -> None:
     # Check if there are exactly three command-line arguments (including the script name)
@@ -196,8 +238,10 @@ def main() -> None:
     
     # Ask if all files are okay to put in to the destination folder
     while True:
+        # printint all files found for aproval by user
         print("All OK? (Y/n)\n")
-        print('\n'.join(files_to_move))
+        for elem in files_to_move:
+            print(elem)
 
         response = input("\n:>> ")
 

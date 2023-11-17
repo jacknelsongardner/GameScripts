@@ -3,14 +3,16 @@ import sys
 import shutil
 
 exten_to_type: dict = {
-    '.nes' : 'NES',
-    '.snes' : 'SNES',
-    '.n64' : 'N64',
-    '.sfc' : 'SNES',
-    '.nds' : 'NDS',
-    '.wbfs' : 'WII',
-    '.ciso' : 'GC',
-    '.gdi' : 'DC',
+    '.nes' : ['NES'],
+    '.snes' : ['SNES'],
+    '.n64' : ['N64'],
+    '.sfc' : ['SNES'],
+    '.nds' : ['NDS'],
+    '.wbfs' : ['WII'],
+    '.ciso' : ['GC'],
+    '.gdi' : ['DC'],
+    '.cue' : ['SS','PS1'],
+    '.dmg' : ['PSP']
 }
 
 type_to_folder: dict = {
@@ -22,13 +24,12 @@ type_to_folder: dict = {
     'WII' : 'WII',
     'GC' : 'GC',
     'DC' : 'DC',
+    'PSP' : 'PSP',
     'UNKNOWN' : 'UNRESOLVED'
 }
 
 
-acceptable_extentions = ['.nes','.snes','.n64','.sfc','.nds','.cue','.gdi']
-disc_based_systems: list = ['.gdi', '.ciso']
-
+disc_based_files = ['.bin','.cue','.gdi']
 
 # Return whether path is a directory
 def is_directory(path):
@@ -38,12 +39,13 @@ def is_file(path):
     return os.path.isfile(path)
 
 def is_game_disk(path):
-    for filename in path:
-        file_extension = get_file_extension(filename)
-        file_type = get_file_type(file_extension)
+    if is_directory(path):
+        for filename in path:
+            file_extension = get_file_extension(filename)
+            file_type = get_file_type(file_extension)
 
-        if file_type in disc_based_systems:
-            return True
+            if file_type in disc_based_files:
+                return True
         
     return False    
 
@@ -53,8 +55,7 @@ def get_file_extension(file_path):
     return file_extension
 
 
-def get_file_type(file_path):
-    file_extension: str = get_file_extension(file_path)
+def get_file_type(file_extension):
 
     file_type: str = "UNKNOWN"
 
@@ -63,20 +64,19 @@ def get_file_type(file_path):
 
     return file_type
 
+def get_disk_type(folder_path):
+    if is_directory(folder_path):
+        for filename in folder_path:
+            file_extension = get_file_extension(filename)
+            file_type = get_file_type(file_extension)
 
-
+            if file_type != "UNKNOWN":
+                return file_type
+            
+    return "UNKNOWN"
 
 def compile_files(source_folder):
-    output_list = []
-
-    for filename in os.listdir(source_folder):
-
-        if is_directory(filename):
-            output_list = output_list + compile_files(filename)
-        elif is_file(filename):
-            output_list.append(filename)
-
-    return output_list 
+    
 
 def move_files_to_destination(source_files, source_folder, destination_folder):
     for filename in source_files:

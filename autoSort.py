@@ -41,7 +41,7 @@ def is_file(path):
     is_fil = os.path.isfile(path)
     return is_fil
 
-def is_game_file(path)
+def is_game_file(path):
     is_game = False
     if os.path.isfile(path):
         if get_file_type(path) != "UNKNOWN":
@@ -100,8 +100,8 @@ def compile_files(source_folder):
 
         if is_file(file_path):
             file_type = get_file_type(file_name)
-
-            if get_file_type(file_name) in list(type_to_folder.keys()):
+            print(file_type)
+            if get_file_type(file_name) != "UNKNOWN":
                 output_list.append((file_path, file_type))
                 print(f"Found {file_name} of type {file_type}")
 

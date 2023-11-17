@@ -2,6 +2,7 @@ import os
 import sys
 import shutil
 
+# Dictionary for extension to type of file
 exten_to_type: dict = {
     '.nes' : ['NES'],
     '.snes' : ['SNES'],
@@ -12,9 +13,11 @@ exten_to_type: dict = {
     '.ciso' : ['GC'],
     '.gdi' : ['DC'],
     '.cue' : ['SS','PS1'],
-    '.dmg' : ['PSP']
+    '.dmg' : ['PSP'],
+    '.iso' : ['WII','PS1','PS2','DC','GC']
 }
 
+# Dictionary for type of folder to sorted folder (within desintation_folder)
 type_to_folder: dict = {
     'NES' : 'NES',
     'SNES' : 'SNES',
@@ -29,18 +32,26 @@ type_to_folder: dict = {
     'PS1' : 'PS1'
 }
 
+# Type of unrecognized types
+UNKNOWN: str = "UNKNOWN"
 
+# List of recognized game extensions
+game_exten: list = list(exten_to_type.keys())
+
+# List of recognized disk files
 disk_based_files = ['.bin','.cue','.gdi']
 
-# Return whether path is a directory
+# Return true if path is a directory
 def is_directory(path):
     is_direct = os.path.isdir(path)
     return is_direct
-    
+
+# Return true if path is a file
 def is_file(path):
     is_fil = os.path.isfile(path)
     return is_fil
 
+# Return true if path is a game file
 def is_game_file(path):
     is_game = False
     if os.path.isfile(path):

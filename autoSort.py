@@ -6,6 +6,9 @@ from typing import List, Tuple
 import queue as q
 import queue
 
+from threading import Thread
+from multiprocessing import Process
+
 # Dictionary for extension to type of file
 exten_to_type: dict = {
     '.nes' : ['NES'],
@@ -52,11 +55,16 @@ UNKNOWN: str = "UNKNOWN"
 # Log labels
 ERROR: str = "ERROR: "
 LOG: str = "LOG: "
-COMMAND: str = "COMMND: "
+COMMAND: str = "COMMAND: "
 QUESTION: str = "QUESTION: "
+CHOICE: str = "CHOICE: "
 
 # Command labels
 ENDWAIT: str = "ENDWAIT"
+
+# Yes and No labels
+YES: str = "Yes"
+NO: str = "No"
 
 # Queue for responses and/or requests
 reportQ: queue = q.Queue()
@@ -73,7 +81,7 @@ disk_based_files = ['.bin','.cue','.gdi']
 
 # Read commandQ
 def read_command() -> str:
-    return commandQ.read()
+    return commandQ.get()
 
 # Write to commandQ
 def write_command(command: str) -> None:
@@ -81,18 +89,20 @@ def write_command(command: str) -> None:
 
 # Read reportQ
 def read_report() -> str:
-    return commandQ.read()
+    return commandQ.get()
 
 # Write to reportQ
 def write_report(command: str) -> None:
     commandQ.put(command)   
 
 def await_report() -> None:
-    while reportQ.Empty:
+    while reportQ.empty():
+    
         pass 
 
 def await_command() -> None:
-    while commandQ.Empty:
+    while commandQ.empty():
+        
         pass 
  
 # Return true if path is a directory
@@ -175,7 +185,7 @@ def compile_files(source_folder: str) -> list[Tuple[str, list]]:
             if get_file_type(file_name) != "UNKNOWN":
                 output_list.append((file_path, file_type))
                 
-                write_report(f"Found {file_name} of type {file_type}")
+                write_report(f"{LOG} Found {file_name} of type {file_type}")
 
         # If we find a directory
         elif is_directory(file_path):
@@ -203,7 +213,7 @@ def compile_files(source_folder: str) -> list[Tuple[str, list]]:
 def move_files_to_destination(files_to_move: list[Tuple[str, list]], destination_folder: str) -> None:
     for file in files_to_move:
         file_path = file[0]
-
+         
         file_type: str
 
         # If we have one argument for type
@@ -211,20 +221,20 @@ def move_files_to_destination(files_to_move: list[Tuple[str, list]], destination
             file_type = file[1][0]
         # If more than one arguments for type
         elif len(file[1]) > 1:
-            
-            while(True):
-                # Ask user which type
-                write_report(f"QUESTION: File is of which type?: \n {file[1]} or UNKNOWN?")
-                await_command()
+             
+            while True:
+                # Asking user which type and giving choices
+                print(f"{CHOICE} File is of which type?: \n {file[1]} or {UNKNOWN}?")
+                print(file[1] + [UNKNOWN])
 
-                userInput = read_command()
-
+                userInput = input(":>>")
+                 
                 # Get user input on which type
-                if userInput in file[1] or userInput == "UNKNOWN":
+                if userInput in file[1] or userInput == UNKNOWN:
                     file_type = file[1].index(userInput)
                     break
         else:
-            file_type = "UNKNOWN"
+            file_type = UNKNOWN
 
         # Get filetype from the input tuple
         file_type = file[1][0]
@@ -234,40 +244,23 @@ def move_files_to_destination(files_to_move: list[Tuple[str, list]], destination
         # Creating sorting directory if not already there
         if not path_exists(ext_folder_path):
             os.makedirs(ext_folder_path)
-        
+         
         # Moving files to destination
-        if not path_exists(os.path.join(ext_folder_path, get_entry_name(file_path))):
+        file_name = get_entry_name(file_path)
+
+        if not path_exists(os.path.join(ext_folder_path, file_name)):
             shutil.move(file_path, ext_folder_path)
-            print(f"{get_entry_name(file_path)} moved to {destination_folder}")
+            print(f"{LOG} {file_name} moved to {destination_folder}")
         else:
-            print((f"{get_entry_name(file_path)} already exists in {destination_folder}"))
+            pass
+            
+            
+            
+        
 
-            # Ask if user wants to replace file in destination directory
-            while(True):
-                print("Replace? Y/n")
-                user_input = input(":>>")
-                
-                if user_input.lower() == 'y':
-                    print(user_input)
-
-                    os.remove(join_paths(ext_folder_path,get_entry_name(file_path)))
-                    print("Deleted original file")
-
-                    shutil.move(file_path, ext_folder_path)
-                    print(f"{get_entry_name(file_path)} moved to {destination_folder}")
-                    break
-                else:
-                    print(user_input)
-                    print("Cancelled file move")
-                    break
 
 def main() -> None:
     # Check if there are exactly three command-line arguments (including the script name)
-    if len(sys.argv) != 3:
-        print("Usage: python script.py source_folder destination_folder")
-        return
-
-    # Check if there are at least three command-line arguments (including the script name)
     if len(sys.argv) != 3:
         print("Usage: python script.py source_folder destination_folder")
         return
@@ -279,9 +272,12 @@ def main() -> None:
     print(f"Source Folder: {source_folder}")
     print(f"Destination Folder: {destination_folder}")
     
-    # Compile files that are 7z in source folder
     files_to_move = compile_files(source_folder)
     
+    while not reportQ.empty():
+        report = reportQ.get()
+        print(report)
+
     # Ask if all files are okay to put in to the destination folder
     while True:
         # printint all files found for aproval by user
@@ -306,13 +302,69 @@ def main() -> None:
                 print(f"Deleting {response}")
                 files_to_move.remove(response)
             else:
-                print(f"{response} not in files to move / already deleted")
+                print(f"{response} not in files to move / already cancelled")
         # if input unrecognized
         else:
             print("ERROR: Bad user input\n")
 
+    # Check each element to make sure a single destination is asked for
+    for file in files_to_move: 
+        # If we have one argument for type
+        if len(file[1]) == 1:
+            file_type = file[1][0]
+        # If more than one arguments for type
+        elif len(file[1]) > 1:
+             
+            while True:
+                # Asking user which type and giving choices
+                print(f"{CHOICE} File is of which type?: \n {file[1]} or {UNKNOWN}?")
+                print(file[1] + [UNKNOWN])
+
+                userInput = input(":>> ")
+                 
+                # Get user input on which type
+                if userInput in file[1] or userInput == UNKNOWN:
+                    file = file[0], file[1].index(userInput)
+                    break
+        else:
+            file_type = UNKNOWN
+    # Check each element to make sure they don't have elements that already exist
+    for file in files_to_move:
+
+        file_name = get_entry_name(file[0])
+        if path_exists(os.path.join(destination_folder, file_name)):
+
+            print((f"{LOG} {file_name} already exists in {destination_folder}"))
+
+            # Ask if user wants to replace file in destination directory
+            while(True):
+                # Asking frontend for input
+                print(f"{CHOICE} Replace? Y/n")
+
+                # Checking if command yes or no
+                user_input = input(":>> ")
+                
+                if user_input.lower() == 'y':
+                    # Deleting file in write destination
+                    os.remove(join_paths(ext_folder_path,get_entry_name(file_path)))
+                    print(f"{LOG} Deleted original file")
+
+                    # Moving new file to old write destination
+                    shutil.move(file_path, ext_folder_path)
+                    print(f"{LOG} {get_entry_name(file_path)} moved to {destination_folder}")
+                    break
+                else:
+                    print(f"{LOG}user_input")
+                    print("Cancelled file move")
+                    break
+        else:
+            pass
+
     # If OK, extract
-    move_files_to_destination(files_to_move, destination_folder)
+    move_files_to_destination(files_to_move,destination_folder)
+        
+            
+
 
     print("Done!")
 

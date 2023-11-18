@@ -27,6 +27,7 @@ exten_to_type: dict = {
     '.gb' : ['GB'],
     '.gbc' : ['GBC'],
     '.gba' : ['GBA'],
+    '.z64' : ['N64'],
 } 
 
 # Dictionary for type of folder to sorted folder (within desintation_folder)
@@ -78,6 +79,19 @@ game_exten: list = list(exten_to_type.keys())
 # List of recognized disk files
 disk_based_files = ['.bin','.cue','.gdi']
 
+
+# Rename file in desired directory
+def rename_file(old_path, new_name):
+    # Extract the directory and file extension
+    directory, filename = os.path.split(old_path)
+    extension = get_file_extension(old_path)
+
+    # Create the new path with the new name and the original directory
+    new_path = os.path.join(directory, new_name + extension)
+
+    # Rename the file
+    os.rename(old_path, new_path)
+    return new_path
 
 # Read commandQ
 def read_command() -> str:
@@ -252,12 +266,7 @@ def move_files_to_destination(files_to_move: list[Tuple[str, list]], destination
             shutil.move(file_path, ext_folder_path)
             print(f"{LOG} {file_name} moved to {destination_folder}")
         else:
-            pass
-            
-            
-            
-        
-
+            print(f"{LOG} {file_name} already exists in {destination_folder} \n Operation cancelled")
 
 def main() -> None:
     # Check if there are exactly three command-line arguments (including the script name)
@@ -309,15 +318,14 @@ def main() -> None:
 
     # Check each element to make sure a single destination is asked for
     for file in files_to_move: 
-        # If we have one argument for type
-        if len(file[1]) == 1:
-            file_type = file[1][0]
-        # If more than one arguments for type
-        elif len(file[1]) > 1:
+        file_name: str = get_entry_name(file[0])
+
+        # If we have more than one argument for type
+        if len(file[1]) > 1:
              
             while True:
                 # Asking user which type and giving choices
-                print(f"{CHOICE} File is of which type?: \n {file[1]} or {UNKNOWN}?")
+                print(f"{CHOICE} {file} is of which type?: \n {file[1]} or {UNKNOWN}?")
                 print(file[1] + [UNKNOWN])
 
                 userInput = input(":>> ")
@@ -326,45 +334,60 @@ def main() -> None:
                 if userInput in file[1] or userInput == UNKNOWN:
                     file = file[0], file[1].index(userInput)
                     break
-        else:
-            file_type = UNKNOWN
+    
     # Check each element to make sure they don't have elements that already exist
     for file in files_to_move:
+        
+        while(True):
+            file_path = file[0]
+            type_folder = type_to_folder[file[1][0]]
+            file_name = get_entry_name(file[0])
 
-        file_name = get_entry_name(file[0])
-        if path_exists(os.path.join(destination_folder, file_name)):
+            print(file_path)
+            print(file_name)
 
-            print((f"{LOG} {file_name} already exists in {destination_folder}"))
 
-            # Ask if user wants to replace file in destination directory
-            while(True):
+            if path_exists(os.path.join(destination_folder, type_folder, file_name)):
+                print(346)
+                print((f"{LOG} {file_name} already exists in {destination_folder}"))
+
                 # Asking frontend for input
-                print(f"{CHOICE} Replace? Y/n")
+                print(f"{CHOICE} Overwrite or Skip?")
 
                 # Checking if command yes or no
                 user_input = input(":>> ")
                 
-                if user_input.lower() == 'y':
+                if user_input.lower() == 'overwrite':
                     # Deleting file in write destination
-                    os.remove(join_paths(ext_folder_path,get_entry_name(file_path)))
+                    os.remove(join_paths(destination_folder, type_folder, file_name))
                     print(f"{LOG} Deleted original file")
 
-                    # Moving new file to old write destination
-                    shutil.move(file_path, ext_folder_path)
-                    print(f"{LOG} {get_entry_name(file_path)} moved to {destination_folder}")
+                    # Keeping file the same, allowing later method to overwrite
+                    print(f"{LOG} {file_name} moved to {destination_folder}")
                     break
-                else:
-                    print(f"{LOG}user_input")
+
+                #elif user_input.lower() == 'rename':
+                #    while(True):
+                #        print("Rename file:")
+                #        new_name = input(":>> ")
+                #       
+                        # Renaming file
+                #        file = rename_file(file_path,new_name), file[1]
+                #        break
+                    # Instead of breaking, we loop back to beginning of while loop'''
+                
+                elif user_input.lower() == 'skip':
+                    # deleting all instances of 
+                    files_to_move = [item for item in files_to_move if item != file]
                     print("Cancelled file move")
                     break
-        else:
-            pass
+                else:
+                    print(f"{ERROR} Invalid user input")
+            else:
+                break
 
     # If OK, extract
     move_files_to_destination(files_to_move,destination_folder)
-        
-            
-
 
     print("Done!")
 

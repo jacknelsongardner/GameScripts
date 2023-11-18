@@ -3,6 +3,9 @@ import sys
 import shutil
 from typing import List, Tuple
 
+import queue as q
+import queue
+
 # Dictionary for extension to type of file
 exten_to_type: dict = {
     '.nes' : ['NES'],
@@ -43,8 +46,23 @@ type_to_folder: dict = {
     'GBA' : 'GBA',
 }
 
-# Type of unrecognized types
+# Unknown type label
 UNKNOWN: str = "UNKNOWN"
+
+# Log labels
+ERROR: str = "ERROR: "
+LOG: str = "LOG: "
+COMMAND: str = "COMMND: "
+QUESTION: str = "QUESTION: "
+
+# Command labels
+ENDWAIT: str = "ENDWAIT"
+
+# Queue for responses and/or requests
+reportQ: queue = q.Queue()
+
+# Queue for commands
+commandQ: queue = q.Queue()
 
 # List of recognized game extensions
 game_exten: list = list(exten_to_type.keys())
@@ -52,6 +70,31 @@ game_exten: list = list(exten_to_type.keys())
 # List of recognized disk files
 disk_based_files = ['.bin','.cue','.gdi']
 
+
+# Read commandQ
+def read_command() -> str:
+    return commandQ.read()
+
+# Write to commandQ
+def write_command(command: str) -> None:
+    commandQ.put(command)
+
+# Read reportQ
+def read_report() -> str:
+    return commandQ.read()
+
+# Write to reportQ
+def write_report(command: str) -> None:
+    commandQ.put(command)   
+
+def await_report() -> None:
+    while reportQ.Empty:
+        pass 
+
+def await_command() -> None:
+    while commandQ.Empty:
+        pass 
+ 
 # Return true if path is a directory
 def is_directory(folder_path: str) -> bool:
     is_direct = os.path.isdir(folder_path)
@@ -128,10 +171,11 @@ def compile_files(source_folder: str) -> list[Tuple[str, list]]:
         # If we find a file
         if is_file(file_path):
             file_type = get_file_type(file_name)
-            print(file_type)
+            
             if get_file_type(file_name) != "UNKNOWN":
                 output_list.append((file_path, file_type))
-                print(f"Found {file_name} of type {file_type}")
+                
+                write_report(f"Found {file_name} of type {file_type}")
 
         # If we find a directory
         elif is_directory(file_path):
@@ -143,16 +187,16 @@ def compile_files(source_folder: str) -> list[Tuple[str, list]]:
                 # Add path and type to output
                 output_list.append((file_path, disk_type))
 
-                print(f"Found {file_name} of type {disk_type}")
+                write_report(f"{LOG} Found {file_name} of type {disk_type}")
 
             # If folder is just a folder
             else:
                 output_list = output_list + compile_files((file_path))
-                print(f"Found {file_name} of type FOLDER.")
+                write_report(f"{LOG} Found {file_name} of type FOLDER.")
 
         # If element was not recognized as file or dir
         else:
-            print("ERROR : CAN'T RECOGNIZE TYPE")
+            write_report(f"{ERROR} CAN'T RECOGNIZE TYPE")
 
     return output_list 
 
@@ -170,8 +214,10 @@ def move_files_to_destination(files_to_move: list[Tuple[str, list]], destination
             
             while(True):
                 # Ask user which type
-                print(f"File is of which type?: \n {file[1]} or UNKNOWN?")
-                userInput = input(":>> ")
+                write_report(f"QUESTION: File is of which type?: \n {file[1]} or UNKNOWN?")
+                await_command()
+
+                userInput = read_command()
 
                 # Get user input on which type
                 if userInput in file[1] or userInput == "UNKNOWN":

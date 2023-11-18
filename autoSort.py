@@ -88,9 +88,16 @@ def rename_file(old_path, new_name):
 
     # Create the new path with the new name and the original directory
     new_path = os.path.join(directory, new_name + extension)
-
-    # Rename the file
     os.rename(old_path, new_path)
+
+# Returns renamed file heading but does not create it
+def get_renamed_path(old_path, new_name):
+    # Extract the directory and file extension
+    directory, filename = os.path.split(old_path)
+    extension = get_file_extension(old_path)
+
+    # Create the new path with the new name and the original directory
+    new_path = os.path.join(directory, new_name + extension)
     return new_path
 
 # Read commandQ
@@ -264,9 +271,9 @@ def move_files_to_destination(files_to_move: list[Tuple[str, list]], destination
 
         if not path_exists(os.path.join(ext_folder_path, file_name)):
             shutil.move(file_path, ext_folder_path)
-            print(f"{LOG} {file_name} moved to {destination_folder}")
+            write_report(f"{LOG} {file_name} moved to {destination_folder}")
         else:
-            print(f"{LOG} {file_name} already exists in {destination_folder} \n Operation cancelled")
+            write_report(f"{LOG} {file_name} already exists in {destination_folder} \n Operation cancelled")
 
 def main() -> None:
     # Check if there are exactly three command-line arguments (including the script name)
@@ -365,17 +372,21 @@ def main() -> None:
                     # Keeping file the same, allowing later method to overwrite
                     print(f"{LOG} {file_name} moved to {destination_folder}")
                     break
-
-                #elif user_input.lower() == 'rename':
-                #    while(True):
-                #        print("Rename file:")
-                #        new_name = input(":>> ")
-                #       
-                        # Renaming file
-                #        file = rename_file(file_path,new_name), file[1]
-                #        break
-                    # Instead of breaking, we loop back to beginning of while loop'''
                 
+                elif user_input.lower() == 'rename':
+                    '''
+                    while(True):
+                        print("Rename file:")
+                        new_name = input(":>> ")
+                       
+                        # Renaming file
+                        if not os.path.exists(get_renamed_path(file_path,new_name)): 
+                            file = rename_file(file_path,new_name), file[1]
+                            break
+                        else:
+                            print("Name already taken")
+                        # Instead of breaking, we loop back to beginning of while loop'''
+                    
                 elif user_input.lower() == 'skip':
                     # deleting all instances of 
                     files_to_move = [item for item in files_to_move if item != file]

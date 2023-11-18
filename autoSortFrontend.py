@@ -1,8 +1,17 @@
 import autoZip
 from autoSort import move_files_to_destination, compile_files
-
+from autoZip import extract_and_delete_zip_files, compile_zip_files
 import tkinter as tk
 from tkinter import filedialog
+
+import queue as q
+import threading as th
+
+logQ: q = q.Queue()
+errorQ: q = q.Queue()
+
+def move_files_thread(*funcArgs):
+    pass
 
 class FileMoverApp:
     def __init__(self, root):

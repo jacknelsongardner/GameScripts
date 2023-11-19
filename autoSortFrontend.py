@@ -2,16 +2,25 @@ import autoZip
 from autoSort import move_files_to_destination, compile_files
 from autoZip import extract_and_delete_zip_files, compile_zip_files
 import tkinter as tk
+
 from tkinter import filedialog
+from tkinter import messagebox
+from tkinter import simpledialog
 
 import queue as q
 import threading as th
 
+from typing import List, Tuple
+
 logQ: q = q.Queue()
 errorQ: q = q.Queue()
 
-def move_files_thread(*funcArgs):
-    pass
+def convert_tuplelist_string(data: List[Tuple[str, List]]) -> str:
+    result = "["
+    for item in data:
+        result += f"('{item[0]}', {item[1]}), "
+    result = result.rstrip(", ") + "]"
+    return result
 
 class FileMoverApp:
     def __init__(self, root):
@@ -55,9 +64,35 @@ class FileMoverApp:
         source_folder = self.source_folder_var.get()
         destination_folder = self.destination_folder_var.get()
 
+        zipYes = messagebox.askyesno("Unzip FIles?", f"Any files to unzip in {destination_folder}")
+
+        # Making sure user approves of unzipping files
+        if zipYes:
+
+            files_to_zip = compile_zip_files(source_folder)
+            zipAprove = messagebox.askokcancel("Unzip the following files?", '.\n'.join(files_to_zip))
+
+            if zipAprove:
+                print(source_folder)
+                print(destination_folder)
+                extract_and_delete_zip_files(files_to_zip, source_folder, source_folder)
+                messagebox.showinfo("Following files zipped:","\n".join(files_to_zip))
+            else:
+                pass
+        else:
+            pass
+
         # Call the existing script functionality
         files_to_move = compile_files(source_folder)
-        move_files_to_destination(files_to_move, destination_folder)
+
+        joined_files = convert_tuplelist_string(files_to_move)
+
+        move_yes = messagebox.askokcancel(f"Sort following files to {destination_folder}?", joined_files)
+
+        # If we are aproved to get the files
+        if move_yes:
+             move_files_to_destination(files_to_move, destination_folder)
+             messagebox.showinfo(f"Following files have been sorted to {destination_folder}:", joined_files)
 
         # Update the output text
         self.output_text.delete(1.0, tk.END)  # Clear previous text

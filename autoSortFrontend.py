@@ -84,7 +84,6 @@ class FileMoverApp:
 
         # Call the existing script functionality
         files_to_move = compile_files(source_folder)
-
         joined_files = convert_tuplelist_string(files_to_move)
 
         move_yes = messagebox.askokcancel(f"Sort following files to {destination_folder}?", joined_files)

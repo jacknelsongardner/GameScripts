@@ -1,5 +1,5 @@
 import autoZip
-from autoSort import move_files_to_destination, compile_files
+from autoSort import move_files_to_destination, compile_files, compile_files_dir, type_files
 from autoZip import extract_and_delete_zip_files, compile_zip_files
 import tkinter as tk
 
@@ -15,12 +15,55 @@ from typing import List, Tuple
 logQ: q = q.Queue()
 errorQ: q = q.Queue()
 
+# converts list of tuples to string for user requests on the frontend
 def convert_tuplelist_string(data: List[Tuple[str, List]]) -> str:
     result = "["
     for item in data:
         result += f"('{item[0]}', {item[1]}), "
     result = result.rstrip(", ") + "]"
     return result
+
+# a window asking user to delete certain elements from text
+def deleteWindow(prompt_text, my_list):
+    def delete_item():
+        selected_item = listbox.curselection()
+        if selected_item:
+            my_list.pop(selected_item[0])
+            listbox.delete(selected_item[0])
+
+    def ok_button():
+        root.destroy()
+
+    def cancel_button():
+        while my_list:
+            my_list.pop()
+            listbox.delete(0)
+
+        root.destroy()
+
+    root = tk.Tk()
+    root.title("Delete Items")
+
+    label = tk.Label(root, text=prompt_text)
+    label.pack(pady=10)
+
+    listbox = tk.Listbox(root, selectmode=tk.SINGLE)
+    for item in my_list:
+        listbox.insert(tk.END, item)
+    listbox.pack(pady=10)
+
+    delete_button = tk.Button(root, text="Delete", command=delete_item)
+    delete_button.pack(side=tk.LEFT, padx=5)
+
+    ok_button = tk.Button(root, text="OK", command=ok_button)
+    ok_button.pack(side=tk.RIGHT, padx=5)
+
+    cancel_button = tk.Button(root, text="Cancel", command=cancel_button)
+    cancel_button.pack(side=tk.RIGHT, padx=5)
+
+    root.wait_window()  # Wait for the window to be destroyed before continuing
+
+    return my_list
 
 class FileMoverApp:
     def __init__(self, root):
@@ -70,29 +113,38 @@ class FileMoverApp:
         if zipYes:
 
             files_to_zip = compile_zip_files(source_folder)
-            zipAprove = messagebox.askokcancel("Unzip the following files?", '.\n'.join(files_to_zip))
+            files_to_zip = deleteWindow("Select which files to unzip:", files_to_zip)
 
-            if zipAprove:
+            if len(files_to_zip) != 0:
                 print(source_folder)
                 print(destination_folder)
                 extract_and_delete_zip_files(files_to_zip, source_folder, source_folder)
                 messagebox.showinfo("Following files zipped:","\n".join(files_to_zip))
             else:
-                pass
+                print("Zip files cancelled") 
         else:
             pass
 
         # Call the existing script functionality
-        files_to_move = compile_files(source_folder)
-        joined_files = convert_tuplelist_string(files_to_move)
+        files_to_move = compile_files_dir(source_folder)
+        print(files_to_move)
+        files_to_move = deleteWindow("Deselect any files you don't wish to move",files_to_move)
 
-        move_yes = messagebox.askokcancel(f"Sort following files to {destination_folder}?", joined_files)
+        print(files_to_move)
+
+        files_with_types = type_files(files_to_move)
+
+        joined_files = convert_tuplelist_string(files_with_types)
+        
+        print(files_with_types)
 
         # If we are aproved to get the files
-        if move_yes:
-             move_files_to_destination(files_to_move, destination_folder)
+        if len(files_with_types) > 0:
+             move_files_to_destination(files_with_types, destination_folder)
              messagebox.showinfo(f"Following files have been sorted to {destination_folder}:", joined_files)
-
+        else:
+            print("move files cancelled")
+        
         # Update the output text
         self.output_text.delete(1.0, tk.END)  # Clear previous text
         self.output_text.insert(tk.END, "Files moved:\n")

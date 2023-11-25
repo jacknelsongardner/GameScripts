@@ -193,12 +193,42 @@ def get_disk_type(folder_path: str) -> str:
 
 # types list of files and returns tuple list with path and type
 def type_files(paths_to_type):
-    output_list: list = []
-
-    for file_path in paths_to_type: 
-        output_list.append((file_path, get_file_type(file_path)))
+    output_list: list[Tuple[str, list]] = []
     
-    return output_list
+    # Iterating through each file/dir in source
+    for file_path in paths_to_type:
+
+        # If we find a file
+        if is_file(file_path):
+            file_type = get_file_type(file_path)
+            
+            if get_file_type(file_path) != "UNKNOWN":
+                output_list.append((file_path, file_type))
+                
+                write_report(f"{LOG} Found {file_path} of type {file_type}")
+
+        # If we find a directory
+        elif is_directory(file_path):
+            # If folder is a disk-folder
+            if is_disk_directory(file_path):
+                
+                disk_type = get_disk_type(file_path)
+
+                # Add path and type to output
+                output_list.append((file_path, disk_type))
+
+                write_report(f"{LOG} Found {file_path} of type {disk_type}")
+
+            # If folder is just a folder
+            else:
+                output_list = output_list + compile_files((file_path))
+                write_report(f"{LOG} Found {file_path} of type FOLDER.")
+
+        # If element was not recognized as file or dir
+        else:
+            write_report(f"{ERROR} CAN'T RECOGNIZE TYPE")
+
+    return output_list 
 
 # Return whether more than one type is available for selected tuple
 def more_than_one_type(types: tuple[str,list]):

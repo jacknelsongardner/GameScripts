@@ -65,6 +65,40 @@ def deleteWindow(prompt_text, my_list):
 
     return my_list
 
+def selectWindow(prompt_text, items):
+    result = None
+
+    def ok_button():
+        nonlocal result
+        selected_item = listbox.curselection()
+        if selected_item:
+            result = selected_item[0]
+        root.destroy()
+
+    def cancel_button():
+        root.destroy()
+
+    root = tk.Tk()
+    root.title("Select Item")
+
+    label = tk.Label(root, text=prompt_text)
+    label.pack(pady=10)
+
+    listbox = tk.Listbox(root, selectmode=tk.SINGLE)
+    for item in items:
+        listbox.insert(tk.END, item)
+    listbox.pack(pady=10)
+
+    ok_button = tk.Button(root, text="OK", command=ok_button)
+    ok_button.pack(side=tk.RIGHT, padx=5)
+
+    cancel_button = tk.Button(root, text="Cancel", command=cancel_button)
+    cancel_button.pack(side=tk.RIGHT, padx=5)
+
+    root.wait_window()
+
+    return result
+ 
 class FileMoverApp:
     def __init__(self, root):
         self.root = root
@@ -134,8 +168,18 @@ class FileMoverApp:
 
         files_with_types = type_files(files_to_move)
 
+        # Check each filepair to see if the file has more than one possible type
+        for filepair in files_with_types:
+            if len(filepair[1]) <= 1:
+                pass
+            # Ask user to select which type this file is
+            else:
+                filepair[1] = [filepair[1][selectWindow(f"Select which type for {filepair[0]}", filepair[1])]]
+
+                print("found multiple types")
+
         joined_files = convert_tuplelist_string(files_with_types)
-        
+
         print(files_with_types)
 
         # If we are aproved to get the files

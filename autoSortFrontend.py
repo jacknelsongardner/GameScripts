@@ -167,6 +167,8 @@ class FileMoverApp:
         print(files_to_move)
 
         files_with_types = type_files(files_to_move)
+        
+        print(files_with_types)
 
         # Check each filepair to see if the file has more than one possible type
         for filepair in files_with_types:
@@ -174,7 +176,7 @@ class FileMoverApp:
                 pass
             # Ask user to select which type this file is
             else:
-                filepair[1] = [filepair[1][selectWindow(f"Select which type for {filepair[0]}", filepair[1])]]
+                filepair = filepair[0], [filepair[1][selectWindow(f"Select which type for {filepair[0]}", filepair[1])]]
 
                 print("found multiple types")
 

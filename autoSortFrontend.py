@@ -1,5 +1,5 @@
 import autoZip
-from autoSort import move_files_to_destination, compile_files, compile_files_dir, type_files
+from autoSort import *
 from autoZip import extract_and_delete_zip_files, compile_zip_files
 import tkinter as tk
 
@@ -9,6 +9,8 @@ from tkinter import simpledialog
 
 import queue as q
 import threading as th
+
+import os
 
 from typing import List, Tuple
 
@@ -65,7 +67,7 @@ def deleteWindow(prompt_text, my_list):
 
     return my_list
 
-def selectWindow(prompt_text, items):
+def selectIndexWindow(prompt_text, items):
     result = None
 
     def ok_button():
@@ -99,6 +101,41 @@ def selectWindow(prompt_text, items):
 
     return result
  
+def selectWindow(prompt_text, items):
+    result = None
+
+    def ok_button():
+        nonlocal result
+        selected_item = listbox.curselection()
+        if selected_item:
+            result = items[selected_item[0]]
+        root.destroy()
+
+    def cancel_button():
+        root.destroy()
+
+    root = tk.Tk()
+    root.title("Select Item")
+
+    label = tk.Label(root, text=prompt_text)
+    label.pack(pady=10)
+
+    listbox = tk.Listbox(root, selectmode=tk.SINGLE)
+    for item in items:
+        listbox.insert(tk.END, item)
+    listbox.pack(pady=10)
+
+    ok_button = tk.Button(root, text="OK", command=ok_button)
+    ok_button.pack(side=tk.RIGHT, padx=5)
+
+    cancel_button = tk.Button(root, text="Cancel", command=cancel_button)
+    cancel_button.pack(side=tk.RIGHT, padx=5)
+
+    root.wait_window()
+
+    return result
+
+
 class FileMoverApp:
     def __init__(self, root):
         self.root = root
@@ -168,17 +205,54 @@ class FileMoverApp:
 
         files_with_types = type_files(files_to_move)
         
-        print(files_with_types)
-
         # Check each filepair to see if the file has more than one possible type
+        i = 0
         for filepair in files_with_types:
             if len(filepair[1]) <= 1:
                 pass
             # Ask user to select which type this file is
             else:
-                filepair = filepair[0], [filepair[1][selectWindow(f"Select which type for {filepair[0]}", filepair[1])]]
+
+                selected_item = selectWindow("Select an item to keep:", filepair[1])
+
+                if selected_item is not None:
+                    newfilepair = filepair[0], [selected_item]
+                    files_with_types[i] = newfilepair
+                else:
+                    print("No item selected or canceled.")
 
                 print("found multiple types")
+            
+            i = i + 1
+
+
+        # Check each element to make sure they don't have elements that already exist
+        for file in files_with_types:
+        
+            while(True):
+                file_path = file[0]
+                type_folder = type_to_folder[file[1][0]]
+                file_name = get_entry_name(file[0])
+
+                if path_exists(os.path.join(destination_folder, type_folder, file_name)):
+                    overwriteOk = messagebox.askokcancel("f {file_name} already exists in {destination_folder}", "Overwrite file?")
+                
+                    if overwriteOk:
+                        # Deleting file in write destination
+                        os.remove(join_paths(destination_folder, type_folder, file_name))
+
+                        messagebox.showinfo("Success!", f"Deleted original file, moved {file_name} to {destination_folder}")
+                        break
+                
+                    else:
+                        # deleting all instances of 
+                        files_to_move = [item for item in files_to_move if item != file]
+                        messagebox.showinfo("Cancelled overwrite")
+                        break
+                else:
+                    break
+
+        print(files_with_types)
 
         joined_files = convert_tuplelist_string(files_with_types)
 

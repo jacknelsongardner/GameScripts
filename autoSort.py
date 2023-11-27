@@ -21,7 +21,7 @@ exten_to_type: dict = {
     '.gdi' : ['DC'],
     '.cue' : ['SS','PS1'],
     '.dmg' : ['PSP'],
-    '.iso' : ['WII','PS1','PS2','DC','GC'],
+    '.iso' : ['WII','PS1','PS2','DC','GC','PSP'],
     '.sms' : ['SMS'],
     '.md' : ['SG'],
     '.gb' : ['GB'],
@@ -48,6 +48,7 @@ type_to_folder: dict = {
     'GBC' : 'GBC',
     'GB' : 'GB',
     'GBA' : 'GBA',
+    'PSP' : 'PSP'
 }
 
 # Unknown type label
@@ -125,6 +126,9 @@ def await_command() -> None:
     while commandQ.empty():
         
         pass 
+
+def get_path_name(path: str) -> str:
+    os.path.basename(path)
  
 # Return true if path is a directory
 def is_directory(folder_path: str) -> bool:

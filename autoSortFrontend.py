@@ -135,7 +135,6 @@ def selectWindow(prompt_text, items):
 
     return result
 
-
 class FileMoverApp:
     def __init__(self, root):
         self.root = root
@@ -187,9 +186,16 @@ class FileMoverApp:
             files_to_zip = deleteWindow("Select which files to unzip:", files_to_zip)
 
             if len(files_to_zip) != 0:
-                print(source_folder)
-                print(destination_folder)
+                # Create pop up notifying user this may take a while
+                popup = tk.Toplevel(root)
+                popup.title("Popup Window")
+                label = tk.Label(popup, text="This is a popup window")
+                label.pack(padx=20, pady=20)
+
                 extract_and_delete_zip_files(files_to_zip, source_folder, source_folder)
+                
+                popup.destroy()
+
                 messagebox.showinfo("Following files zipped:","\n".join(files_to_zip))
             else:
                 print("Zip files cancelled") 
@@ -260,8 +266,18 @@ class FileMoverApp:
 
         # If we are aproved to get the files
         if len(files_with_types) > 0:
-             move_files_to_destination(files_with_types, destination_folder)
-             messagebox.showinfo(f"Following files have been sorted to {destination_folder}:", joined_files)
+
+            # Create pop up notifying user this may take a while
+            popup = tk.Toplevel(root)
+            popup.title("Popup Window")
+            label = tk.Label(popup, text="This is a popup window")
+            label.pack(padx=20, pady=20)
+             
+            # Moving files to destination
+            move_files_to_destination(files_with_types, destination_folder)
+            messagebox.showinfo(f"Following files have been sorted to {destination_folder}:", joined_files)
+        
+            popup.destroy()
         else:
             print("move files cancelled")
         

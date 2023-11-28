@@ -6,6 +6,7 @@ import tkinter as tk
 from tkinter import filedialog
 from tkinter import messagebox
 from tkinter import simpledialog
+from tkinter import ttk
 
 import queue as q
 import threading as th
@@ -150,20 +151,34 @@ class FileMoverApp:
     def setup_gui(self):
         # Source Folder Entry
         tk.Label(self.root, text="Source Folder:").grid(row=0, column=0, sticky='e')
-        tk.Entry(self.root, textvariable=self.source_folder_var, width=40).grid(row=0, column=1)
-        tk.Button(self.root, text="Browse", command=self.browse_source_folder).grid(row=0, column=2)
+        tk.Entry(self.root, textvariable=self.source_folder_var).grid(row=0, column=1, padx=5, pady=5, sticky='we', columnspan=2)
+        tk.Button(self.root, text="Browse", command=self.browse_source_folder).grid(row=0, column=3, padx=5, pady=5, sticky='w')
 
         # Destination Folder Entry
         tk.Label(self.root, text="Destination Folder:").grid(row=1, column=0, sticky='e')
-        tk.Entry(self.root, textvariable=self.destination_folder_var, width=40).grid(row=1, column=1)
-        tk.Button(self.root, text="Browse", command=self.browse_destination_folder).grid(row=1, column=2)
+        tk.Entry(self.root, textvariable=self.destination_folder_var).grid(row=1, column=1, padx=5, pady=5, sticky='we', columnspan=2)
+        tk.Button(self.root, text="Browse", command=self.browse_destination_folder).grid(row=1, column=3, padx=5, pady=5, sticky='w')
 
         # Move Files Button
-        tk.Button(self.root, text="Move Files", command=self.move_files).grid(row=2, column=1)
+        tk.Button(self.root, text="Move Files", command=self.move_files).grid(row=2, column=1, columnspan=2, pady=10, sticky='we')
 
         # Output Text
-        self.output_text = tk.Text(self.root, height=10, width=60)
-        self.output_text.grid(row=3, column=0, columnspan=3)
+        self.output_text = tk.Text(self.root, height=10, width=60,state='disabled', wrap=tk.WORD)
+        self.output_text.grid(row=3, column=0, columnspan=4, padx=5, pady=5, sticky='nsew')
+
+        # Configure grid to make columns expandable
+        for i in range(4):  # Number of columns
+            self.root.grid_columnconfigure(i, weight=1)
+        
+        # Configure grid to make rows non-expandable vertically
+        for i in range(3):  # Number of rows
+            self.root.grid_rowconfigure(i, weight=0)
+
+        self.root.grid_rowconfigure(3,weight=1)
+
+    def adjust_text_widget_size(self, event):
+        new_width = event.width - 10  # Adjust for padding
+        self.output_text.config(width=new_width)
 
     def browse_source_folder(self):
         folder_path = filedialog.askdirectory()
@@ -186,28 +201,20 @@ class FileMoverApp:
             files_to_zip = deleteWindow("Select which files to unzip:", files_to_zip)
 
             if len(files_to_zip) != 0:
-                # Create pop up notifying user this may take a while
-                popup = tk.Toplevel(root)
-                popup.title("Popup Window")
-                label = tk.Label(popup, text="This is a popup window")
-                label.pack(padx=20, pady=20)
+                messagebox.showinfo("Notice","Unzipping files may take some time. Please be patient.")
 
                 extract_and_delete_zip_files(files_to_zip, source_folder, source_folder)
-                
-                popup.destroy()
 
                 messagebox.showinfo("Following files zipped:","\n".join(files_to_zip))
             else:
-                print("Zip files cancelled") 
+                messagebox.showinfo("Cancelled",f"File move was cancelled. Selected files will remain in the source folder.")
         else:
             pass
 
         # Call the existing script functionality
         files_to_move = compile_files_dir(source_folder)
-        print(files_to_move)
+        
         files_to_move = deleteWindow("Deselect any files you don't wish to move",files_to_move)
-
-        print(files_to_move)
 
         files_with_types = type_files(files_to_move)
         
@@ -225,9 +232,7 @@ class FileMoverApp:
                     newfilepair = filepair[0], [selected_item]
                     files_with_types[i] = newfilepair
                 else:
-                    print("No item selected or canceled.")
-
-                print("found multiple types")
+                    messagebox.showinfo("Cancelled",f"File move cancelled.")
             
             i = i + 1
 
@@ -270,7 +275,7 @@ class FileMoverApp:
             # Create pop up notifying user this may take a while
             popup = tk.Toplevel(root)
             popup.title("Popup Window")
-            label = tk.Label(popup, text="This is a popup window")
+            label = tk.Label(popup, text="Moving files ")
             label.pack(padx=20, pady=20)
              
             # Moving files to destination
@@ -279,8 +284,8 @@ class FileMoverApp:
         
             popup.destroy()
         else:
-            print("move files cancelled")
-        
+            messagebox.showinfo("Cancelled",f"File move was cancelled. Selected files will remain in the source folder.")
+            
         # Update the output text
         self.output_text.delete(1.0, tk.END)  # Clear previous text
         self.output_text.insert(tk.END, "Files moved:\n")

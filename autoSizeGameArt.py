@@ -9,7 +9,8 @@ import subprocess
 
 coverart_dimensions = {
     "SLEEVE:PS2" : [273,184],
-    "SLEEVE:GC" : [273,184]
+    "SLEEVE:GC" : [273,184],
+    "SLEEVE:PS3" : [271,149]
 }
 
 def print_image(source_path, destination_path, pdf_name, print_width_mm, print_height_mm):

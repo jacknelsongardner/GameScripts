@@ -137,60 +137,64 @@ def selectWindow(prompt_text, items):
     return result
 
 class FileMoverApp:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("File Mover")
+    def __init__(self, master):
+        self.master = master
+        self.master.title("File Mover App")
+        self.master.geometry("800x600")
 
-        # Variables for entry widgets
-        self.source_folder_var = tk.StringVar()
-        self.destination_folder_var = tk.StringVar()
+        # Create a PanedWindow for resizable divider
+        self.paned_window = tk.PanedWindow(master, orient=tk.HORIZONTAL, sashrelief=tk.GROOVE, handlesize=10)
+        self.paned_window.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        
+        # Create a Frame for the left side
+        left_frame = tk.Frame(self.paned_window)
+        self.paned_window.add(left_frame)
 
-        # Set up GUI elements
-        self.setup_gui()
+        # Create Listbox for user clickable list
+        self.file_listbox = tk.Listbox(left_frame, width=50, height=10, selectmode=tk.SINGLE)
+        self.file_listbox.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=10, pady=10)
 
-    def setup_gui(self):
+        # Create a Frame for the right side
+        right_frame = tk.Frame(self.paned_window)
+        self.paned_window.add(right_frame)
+
         # Source Folder Entry
-        tk.Label(self.root, text="Source Folder:").grid(row=0, column=0, sticky='e')
-        tk.Entry(self.root, textvariable=self.source_folder_var).grid(row=0, column=1, padx=5, pady=5, sticky='we', columnspan=2)
-        tk.Button(self.root, text="Browse", command=self.browse_source_folder).grid(row=0, column=3, padx=5, pady=5, sticky='w')
+        self.source_folder_label = tk.Label(right_frame, text="Source Folder:")
+        self.source_folder_label.pack(side=tk.TOP, pady=5)
+        self.source_folder_entry = tk.Entry(right_frame)
+        self.source_folder_entry.pack(side=tk.TOP, pady=5)
+        self.browse_source_button = tk.Button(right_frame, text="Browse", command=self.browse_source)
+        self.browse_source_button.pack(side=tk.TOP, pady=5)
 
         # Destination Folder Entry
-        tk.Label(self.root, text="Destination Folder:").grid(row=1, column=0, sticky='e')
-        tk.Entry(self.root, textvariable=self.destination_folder_var).grid(row=1, column=1, padx=5, pady=5, sticky='we', columnspan=2)
-        tk.Button(self.root, text="Browse", command=self.browse_destination_folder).grid(row=1, column=3, padx=5, pady=5, sticky='w')
+        self.dest_folder_label = tk.Label(right_frame, text="Destination Folder:")
+        self.dest_folder_label.pack(side=tk.TOP, pady=5)
+        self.dest_folder_entry = tk.Entry(right_frame)
+        self.dest_folder_entry.pack(side=tk.TOP, pady=5)
+        self.browse_dest_button = tk.Button(right_frame, text="Browse", command=self.browse_dest)
+        self.browse_dest_button.pack(side=tk.TOP, pady=5)
 
         # Move Files Button
-        tk.Button(self.root, text="Move Files", command=self.move_files).grid(row=2, column=1, columnspan=2, pady=10, sticky='we')
+        self.move_button = tk.Button(right_frame, text="Move Files", command=self.move_files)
+        self.move_button.pack(side=tk.TOP, pady=5)
 
-        # Output Text
-        self.output_text = tk.Text(self.root, height=10, width=60,state='disabled', wrap=tk.WORD)
-        self.output_text.grid(row=3, column=0, columnspan=4, padx=5, pady=5, sticky='nsew')
+        # Log Textbox
+        self.log_text = tk.Text(master, height=10, wrap=tk.WORD, state=tk.DISABLED)
+        self.log_text.pack(side=tk.BOTTOM, fill=tk.BOTH, pady=10)
 
-        # Configure grid to make columns expandable
-        for i in range(4):  # Number of columns
-            self.root.grid_columnconfigure(i, weight=1)
-        
-        # Configure grid to make rows non-expandable vertically
-        for i in range(3):  # Number of rows
-            self.root.grid_rowconfigure(i, weight=0)
-
-        self.root.grid_rowconfigure(3,weight=1)
-
-    def adjust_text_widget_size(self, event):
-        new_width = event.width - 10  # Adjust for padding
-        self.output_text.config(width=new_width)
-
-    def browse_source_folder(self):
+    def browse_source(self):
         folder_path = filedialog.askdirectory()
-        self.source_folder_var.set(folder_path)
+        self.source_folder_entry.delete(0, tk.END)
+        self.source_folder_entry.insert(0, folder_path)
 
-    def browse_destination_folder(self):
+    def browse_dest(self):
         folder_path = filedialog.askdirectory()
-        self.destination_folder_var.set(folder_path)
+        self.dest_folder_entry.delete(0, tk.END)
+        self.dest_folder_entry.insert(0, folder_path)
 
     def move_files(self):
-        source_folder = self.source_folder_var.get()
-        destination_folder = self.destination_folder_var.get()
+        source_folder = self.source_folder_entry.get()
+        destination_folder = self.dest_folder_entry.get()
 
         zipYes = messagebox.askyesno("Unzip FIles?", f"Any files to unzip in {destination_folder}")
 
